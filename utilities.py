@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 import random
 from PIL import Image
+from sklearn.metrics import confusion_matrix
 
 
 def plot_results(model, epochs, title):
@@ -97,3 +98,26 @@ def augment(my_dir, max_count):
                 Image.fromarray(np.flip(img, 1)).save(new_name)
 
             print("File " + new_name + " has been created")
+
+def print_class_metrics(y_pred, y_truth, classes):
+""" Prints Sensitivity, Specificity and Error for Classes """
+    cnf_matrix = confusion_matrix(y_truth, y_pred)
+    metrics = pd.DataFrame(index=['Sensitivity', 'Specificity', 'Error'],
+                           columns=[x.title() for x in classes])
+
+    for i in range(0, len(cnf_matrix)):
+        TP = cnf_matrix[i][i]
+        FN = sum(cnf_matrix[i]) - TP  # row
+        FP = sum(cnf_matrix[:, i]) - TP  # col
+        TN = sum(sum(cnf_matrix)) - TP - FN - FP
+
+        accuracy = TP / sum(cnf_matrix[i])
+        error = 1 - TP / sum(cnf_matrix[i])
+        sensitivity = TP / (TP + FN)
+        specificity = TN / (TN + FP)
+
+        metrics.iloc[0][i] = round(sensitivity, 4)
+        metrics.iloc[1][i] = round(specificity, 4)
+        metrics.iloc[2][i] = round(error, 4)
+
+    print(metrics)
